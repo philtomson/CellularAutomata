@@ -75,6 +75,7 @@ function run(ca::CA)
       if(ca.reset)
          ca.reset = false
          ca.state = init()
+         draw_state(draw_er)
       end
       if(sum(ca.state) == 0)
          println("ALL CELLS DEAD!!!")
