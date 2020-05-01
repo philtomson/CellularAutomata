@@ -1,5 +1,6 @@
 include("matrix_disp_ex.jl")
 global state
+
 #Von Neumann neighborhood:
 VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1)]
 Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
@@ -7,6 +8,25 @@ Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
 neighborhood = Moore_Neighborhood
 
 get_int_bits(item) = sizeof(item)*8
+
+function init(sz=50)
+   state = rand(UInt16, sz, sz)
+   state = [ x > 0x8000 for x in state]
+   return state
+end
+
+mutable struct CA
+   task::Union{Task, Nothing}
+   stopped::Bool
+   reset::Bool
+   neighborhood 
+   state
+ #TODO: should have a renderer instead of the renderer having
+ # a CA
+end
+
+CA() = CA(nothing, false, false, Moore_Neighborhood, init())
+   
 
 
 function sum_neighbors(state_matrix, cur_pos, nhood=neighborhood)
@@ -48,25 +68,26 @@ function next_state(state_matrix)
     return ret_matrix
 end
 
-state = rand(UInt16, 50, 50)
-state = [ x > 0x8000 for x in state]
 
- #display(state)
- #for i in 1:10
- #  global state
- #  state = next_state(state)         
- #  display(state)
- #end
-
-for i in 1:1000
-   global state
-   if(sum(state) == 0)
-      println("ALL CELLS DEAD!!!")
-      break
+function run(ca::CA)
+   draw_er = DrawingState(ca)
+   while true
+      if(ca.reset)
+         ca.reset = false
+         ca.state = init()
+      end
+      if(sum(ca.state) == 0)
+         println("ALL CELLS DEAD!!!")
+         break
+      end
+      if(!ca.stopped)
+         ca.state = next_state(ca.state)
+         draw_state(draw_er)
+      end
+      sleep(0.1)
    end
-   state = next_state(state)
-   draw_state(c,state,8)
-   sleep(0.1)
-end
+ end
 
+ca = CA()
+run(ca)
          
