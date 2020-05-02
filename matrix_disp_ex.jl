@@ -44,7 +44,7 @@ import Base.push!
 Base.push!(box::GtkBoxLeaf, btn::BiStateButton) = Base.push!(box, btn.btn)
 
 win = Gtk.Window("Game of Life")
-cnvs = Gtk.Canvas(400,400)
+cnvs = Gtk.Canvas(600,600)
 
 boxH = Gtk.Box(:h)
 push!(win, boxH)

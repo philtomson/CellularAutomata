@@ -13,10 +13,15 @@ function walk(maze::Matrix, nxtcell::Vector, visited::Vector=[])
     end
     maze
 end
+
 function maze(w::Int, h::Int)
     maze = collect(i % 2 | j % 2 for i in 1:2w+1, j in 1:2h+1)
     firstcell = 2 * [rand(1:w), rand(1:h)]
-    return walk(maze, firstcell)
+    maze = walk(maze, firstcell)
+    #zero out entry and exit
+    maze[2w,2h+1] = 0
+    maze[2,1]     = 0
+    return maze
 end
 
 pprint(matrix) = for i = 1:size(matrix, 1) println(join(matrix[i, :])) end
