@@ -1,3 +1,4 @@
+abstract type CellularAutomaton end
 include("matrix_disp_ex.jl")
 include("maze.jl")
 global state
@@ -21,9 +22,18 @@ function init_with_maze(sz=50)
    return maze(h,w)
 end
 
-abstract type CellularAutomaton end
 
 
+#Game of Life
+mutable struct GoL <: CellularAutomaton
+   task::Union{Task, Nothing}
+   stopped::Bool
+   reset::Bool
+   neighborhood::Array{Tuple{Int64,Int64},1} 
+   state
+ #TODO: should have a renderer instead of the renderer having
+ # a CA
+end
 
 mutable struct CA <: CellularAutomaton
    task::Union{Task, Nothing}
@@ -39,8 +49,7 @@ mutable struct CA <: CellularAutomaton
 end
 
 
-CA() = CA(nothing, false, false, Moore_Neighborhood, init(), true,next_state)
- #CA_MazeSolve() = CA(nothing, true, false, VN_Neighborhood, init_with_maze())
+CA() = CA(nothing, true, false, Moore_Neighborhood, init(), true,next_state)
    
 
 function CA(fn::Function)
@@ -129,8 +138,12 @@ function next_state(ca::CA)
     return ret_matrix
 end
 
+function step(ca::CA)
+   ca.state = ca.next_state(ca)
+end
+
 function run(ca::CA)
-   draw_er = DrawingState(ca)
+   draw_er = CARenderer(ca)
    draw_state(draw_er)
    while true
       if(ca.reset)
@@ -143,7 +156,7 @@ function run(ca::CA)
          break
       end
       if(!ca.stopped)
-         ca.state = ca.next_state(ca)
+         step(ca)
          draw_state(draw_er)
       end
       sleep(0.01)
