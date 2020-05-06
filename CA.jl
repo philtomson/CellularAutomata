@@ -1,8 +1,11 @@
+module CAs
 abstract type CellularAutomaton end
+
 include("matrix_disp_ex.jl")
 include("maze.jl")
-global state
 
+
+export GoL, CA
 #Von Neumann neighborhood:
 VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1)]
 Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
@@ -142,6 +145,7 @@ function step(ca::CA)
    ca.state = ca.next_state(ca)
 end
 
+
 function run(ca::CA)
    draw_er = CARenderer(ca)
    draw_state(draw_er)
@@ -163,6 +167,10 @@ function run(ca::CA)
    end
  end
 
-ca = CA(init_with_maze)
-run(ca)
+end #module
+if abspath(PROGRAM_FILE) == @__FILE__
+   using .CAs
+   ca = CAs.CA(CAs.init_with_maze)
+   CAs.run(ca)
+end
          
