@@ -27,26 +27,19 @@ end
 
 #Game of Life
 mutable struct GoL <: CellularAutomaton
-   task::Union{Task, Nothing}
-   stopped::Bool
-   reset::Bool
-   neighborhood::Array{Tuple{Int64,Int64},1} 
-   state
- #TODO: should have a renderer instead of the renderer having
- # a CA
-end
-
-mutable struct CA <: CellularAutomaton
-   task::Union{Task, Nothing}
-   stopped::Bool
-   reset::Bool
    neighborhood::Array{Tuple{Int64,Int64},1} 
    init_fn::Function
    state
    wrap::Bool
    next_state::Function
- #TODO: should have a renderer instead of the renderer having
- # a CA
+end
+
+mutable struct CA <: CellularAutomaton
+   neighborhood::Array{Tuple{Int64,Int64},1} 
+   init_fn::Function
+   state
+   wrap::Bool
+   next_state::Function
 end
 
 
@@ -60,10 +53,7 @@ function CA(fn::Function)
              else
                 (VN_Neighborhood, next_state_maze,false)
              end
-   return CA(nothing, 
-             (init_fn_name == :init_with_maze),
-             false,
-             nbrhood,
+   return CA(nbrhood,
              fn,
              fn(),
              wrap,
@@ -89,12 +79,12 @@ function sum_neighbors(ca::CA, cur_pos)
    return sum
 end
 
-# Conway's Game of Life rules:
-#    Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-#   Any live cell with two or three live neighbours lives on to the next generation.
-#   Any live cell with more than three live neighbours dies, as if by overpopulation.
-#   Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
+
+#Maze solver rules:
+# 1. Wall cells (1's) remain walls 
+# 2. A Cell surrounded by 3 or 4 wall cells becomes a wall cell
+# ... otherwise maintain state
 function next_state_maze(ca::CA)
    ret_matrix = similar(ca.state)
    for j = 1:size(ca.state,2)
@@ -113,6 +103,12 @@ function next_state_maze(ca::CA)
     end
     return ret_matrix
 end
+
+# Conway's Game of Life rules:
+#    Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+#   Any live cell with two or three live neighbours lives on to the next generation.
+#   Any live cell with more than three live neighbours dies, as if by overpopulation.
+#   Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
 function next_state(ca::CA)
    ret_matrix = similar(ca.state)
@@ -152,6 +148,5 @@ if abspath(PROGRAM_FILE) == @__FILE__
    using .CAs
    ca = CAs.CA(CAs.init_with_maze)
    CAs.run(ca)
-
 end
          

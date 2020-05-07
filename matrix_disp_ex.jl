@@ -49,7 +49,7 @@ end
 function CARenderer(ca::CellularAutomaton, mult=8)
    resume = Condition()
    task = @task callbackInner(state)
-   win = Gtk.Window("Game of Life")
+   win = Gtk.Window("Cellular Automata")
    h,w = size(ca.state)
    cnvs = Gtk.Canvas(h*mult,w*mult)
    boxH = Gtk.Box(:h)
