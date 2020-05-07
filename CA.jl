@@ -25,8 +25,6 @@ function init_with_maze(sz=50)
    return maze(h,w)
 end
 
-
-
 #Game of Life
 mutable struct GoL <: CellularAutomaton
    task::Union{Task, Nothing}
@@ -98,13 +96,12 @@ end
 #   Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
 function next_state_maze(ca::CA)
-   state_matrix = ca.state
-   ret_matrix = similar(state_matrix)
-   for j = 1:size(state_matrix,2)
-      for i = 1:size(state_matrix,2)
+   ret_matrix = similar(ca.state)
+   for j = 1:size(ca.state,2)
+      for i = 1:size(ca.state,2)
          ns = sum_neighbors(ca, (i,j)) 
-         if(state_matrix[i,j] > 0 ) #WALL
-            ret_matrix[i,j] = (state_matrix[i,j])
+         if(ca.state[i,j] > 0 ) #WALL
+            ret_matrix[i,j] = (ca.state[i,j])
          else #FREE CELL
             if(ns < 3)
                ret_matrix[i,j] = 0
@@ -118,22 +115,21 @@ function next_state_maze(ca::CA)
 end
 
 function next_state(ca::CA)
-   state_matrix = ca.state
-   ret_matrix = similar(state_matrix)
-   for j = 1:size(state_matrix,2)
-      for i = 1:size(state_matrix,2)
+   ret_matrix = similar(ca.state)
+   for j = 1:size(ca.state,2)
+      for i = 1:size(ca.state,2)
          ns = sum_neighbors(ca, (i,j)) 
-         if(state_matrix[i,j] > 0 )
+         if(ca.state[i,j] > 0 )
             if( ns < 2 || ns > 3)
                ret_matrix[i,j] = 0
             else 
-               ret_matrix[i,j] = (state_matrix[i,j])
+               ret_matrix[i,j] = (ca.state[i,j])
             end
          else #currently dead
             if(ns == 3)
                ret_matrix[i,j] = 1
             else
-               ret_matrix[i,j] = (state_matrix[i,j])
+               ret_matrix[i,j] = (ca.state[i,j])
             end
          end
       end
@@ -148,23 +144,7 @@ end
 
 function run(ca::CA)
    draw_er = CARenderer(ca)
-   draw_state(draw_er)
-   while true
-      if(ca.reset)
-         ca.reset = false
-         ca.state = ca.init_fn()
-         draw_state(draw_er)
-      end
-      if(sum(ca.state) == 0)
-         println("ALL CELLS DEAD!!!")
-         break
-      end
-      if(!ca.stopped)
-         step(ca)
-         draw_state(draw_er)
-      end
-      sleep(0.01)
-   end
+   runit(draw_er)
  end
 
 end #module
@@ -172,5 +152,6 @@ if abspath(PROGRAM_FILE) == @__FILE__
    using .CAs
    ca = CAs.CA(CAs.init_with_maze)
    CAs.run(ca)
+
 end
          

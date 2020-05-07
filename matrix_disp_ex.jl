@@ -6,6 +6,7 @@ mutable struct BiStateButton
    init_text::String
    clicked_text::String
    clicked::Bool
+
 end
 
 BiStateButton(init_txt::String, clicked_txt::String) =
@@ -28,15 +29,26 @@ function expand_matrix(m, x)
    return ret_buf
 end
 
+ #mutable struct CallBackState
+ #  task::Union{Task, Nothing}
+ #  stopped::Bool
+ #  reset::Bool
+ #end
 
 mutable struct CARenderer
    ca::CellularAutomaton
    win::GtkWindowLeaf
    canvas::GtkCanvas
    mult::Int #zoom factor
+   resume::Condition
+   task::Union{Task, Nothing}
+   stopped::Bool
+   reset::Bool
 end
 
 function CARenderer(ca::CellularAutomaton, mult=8)
+   resume = Condition()
+   task = @task callbackInner(state)
    win = Gtk.Window("Game of Life")
    h,w = size(ca.state)
    cnvs = Gtk.Canvas(h*mult,w*mult)
@@ -52,15 +64,18 @@ function CARenderer(ca::CellularAutomaton, mult=8)
    exit_btn = Gtk.Button("exit")
    push!(boxV, exit_btn)
    push!(boxH, cnvs)
+   renderer = CARenderer(ca, win, cnvs, mult, resume, nothing, true, false)
+   renderer.task = @task runit(renderer, state)
    function handle_start_stop_btn(widget)
       if(start_stop_btn.clicked)
          start_stop_btn.clicked = false
          set_gtk_property!(start_stop_btn.btn, :label, String, start_stop_btn.init_text)
-         ca.stopped = true
+         renderer.stopped = true
          println("STOP")
       else
          println("START")
-         ca.stopped = false
+         renderer.stopped = false
+         notify(resume)
          start_stop_btn.clicked = true
          set_gtk_property!(start_stop_btn.btn, :label, String, start_stop_btn.clicked_text)
       end
@@ -68,11 +83,13 @@ function CARenderer(ca::CellularAutomaton, mult=8)
 
    function handle_reset_btn(widget)
       println("RESET")
-      ca.reset = true
-      ca.stopped = true
+      #draw_state(renderer)
+      renderer.reset = true
+      renderer.stopped = true
       # since reset should put the ca into a stopped state:
       start_stop_btn.clicked = false
       set_gtk_property!(start_stop_btn.btn, :label, String, start_stop_btn.init_text)
+      notify(resume) #what if it's not stopped?
    end
 
    function handle_exit_btn(widget)
@@ -85,17 +102,40 @@ function CARenderer(ca::CellularAutomaton, mult=8)
    Gtk.signal_connect(handle_exit_btn,  exit_btn,  "clicked")
 
    Gtk.showall(win)
-   CARenderer(ca, win, cnvs, mult)
+   schedule(renderer.task)
+   return renderer
 end
 
-function draw_state(ds::CARenderer)
-   ca = ds.ca
-   sz = size(ds.ca.state,1)
-   mult = ds.mult
-   @guarded draw(ds.canvas) do widget
-       ctx = getgc(ds.canvas)
-       buf = expand_matrix((ds.ca.state .* 0x8000), mult)
+function draw_state(this::CARenderer)
+   sz = size(this.ca.state,1)
+   mult = this.mult
+   @guarded draw(this.canvas) do widget
+       ctx = getgc(this.canvas)
+       buf = expand_matrix((this.ca.state .* 0x8000), mult)
        image(ctx, CairoRGBSurface(buf), 0, 0, sz*mult,sz*mult)
+   end
+end
+
+function runit(this::CARenderer )
+   draw_state(this)
+   while true
+      draw_state(this)
+      if(this.reset)
+         this.reset = false
+         this.ca.state = this.ca.init_fn()
+         draw_state(this)
+      end
+      if this.stopped
+         println("suspending for now...")
+         wait(this.resume)
+         println("... back after wait")
+      end
+      if(sum(this.ca.state) == 0)
+         println("ALL CELLS DEAD!!!")
+         break
+      end
+      step(this.ca)
+      sleep(0.01)
    end
 end
 
