@@ -45,6 +45,16 @@ mutable struct CA <: TwoDimensionalCA
    next_state::Function
 end
 
+ #TwoArityOneDimNeighborhood = [
+
+mutable struct OneD_CA <: OneDimensionalCA
+   neighborhood::Array{Tuple{Int64,Int64},1} 
+   init_fn::Function
+   state
+   wrap::Bool
+   next_state::Function
+end
+
 
 CA() = CA(nothing, true, false, Moore_Neighborhood, init(), true,next_state)
    

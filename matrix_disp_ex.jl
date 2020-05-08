@@ -61,6 +61,10 @@ function CARenderer(ca::CellularAutomaton, mult=8)
    push!(boxV, start_stop_btn)
    reset_btn = Gtk.Button("reset")
    push!(boxV, reset_btn)
+   
+   step_btn = Gtk.Button("step")
+   push!(boxV, step_btn)
+
    exit_btn = Gtk.Button("exit")
    push!(boxV, exit_btn)
    push!(boxH, cnvs)
@@ -92,6 +96,13 @@ function CARenderer(ca::CellularAutomaton, mult=8)
       notify(resume) #what if it's not stopped?
    end
 
+   function handle_step_btn(widget)
+      println("STEP")
+      renderer.stopped = true
+      step(ca)
+      draw_state(renderer)
+   end
+
    function handle_exit_btn(widget)
       println("EXIT")
       exit()
@@ -99,6 +110,7 @@ function CARenderer(ca::CellularAutomaton, mult=8)
 
    Gtk.signal_connect(handle_start_stop_btn, start_stop_btn.btn,  "clicked")
    Gtk.signal_connect(handle_reset_btn, reset_btn, "clicked")
+   Gtk.signal_connect(handle_step_btn,  step_btn, "clicked")
    Gtk.signal_connect(handle_exit_btn,  exit_btn,  "clicked")
 
    Gtk.showall(win)
