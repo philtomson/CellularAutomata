@@ -1,11 +1,14 @@
 module CAs
 abstract type CellularAutomaton end
+abstract type TwoDimensionalCA <: CellularAutomaton end
+abstract type OneDimensionalCA <: CellularAutomaton end
 
 include("matrix_disp_ex.jl")
 include("maze.jl")
 
 
 export GoL, CA
+#2D neighborhoods:
 #Von Neumann neighborhood:
 VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1)]
 Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
@@ -26,7 +29,7 @@ function init_with_maze(sz=50)
 end
 
 #Game of Life
-mutable struct GoL <: CellularAutomaton
+mutable struct GoL <: TwoDimensionalCA
    neighborhood::Array{Tuple{Int64,Int64},1} 
    init_fn::Function
    state
@@ -34,7 +37,7 @@ mutable struct GoL <: CellularAutomaton
    next_state::Function
 end
 
-mutable struct CA <: CellularAutomaton
+mutable struct CA <: TwoDimensionalCA
    neighborhood::Array{Tuple{Int64,Int64},1} 
    init_fn::Function
    state
@@ -60,7 +63,7 @@ function CA(fn::Function)
              ns_fn)
 end
 
-function sum_neighbors(ca::CA, cur_pos)
+function sum_neighbors(ca::TwoDimensionalCA, cur_pos)
    state_matrix = ca.state
    nhood = ca.neighborhood
    sum = 0
@@ -85,7 +88,7 @@ end
 # 1. Wall cells (1's) remain walls 
 # 2. A Cell surrounded by 3 or 4 wall cells becomes a wall cell
 # ... otherwise maintain state
-function next_state_maze(ca::CA)
+function next_state_maze(ca::TwoDimensionalCA)
    ret_matrix = similar(ca.state)
    for j = 1:size(ca.state,2)
       for i = 1:size(ca.state,2)
@@ -110,7 +113,7 @@ end
 #   Any live cell with more than three live neighbours dies, as if by overpopulation.
 #   Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
-function next_state(ca::CA)
+function next_state(ca::TwoDimensionalCA)
    ret_matrix = similar(ca.state)
    for j = 1:size(ca.state,2)
       for i = 1:size(ca.state,2)
@@ -133,12 +136,12 @@ function next_state(ca::CA)
     return ret_matrix
 end
 
-function step(ca::CA)
+function step(ca::CellularAutomaton)
    ca.state = ca.next_state(ca)
 end
 
 
-function run(ca::CA)
+function run(ca::TwoDimensionalCA)
    draw_er = CARenderer(ca)
    runit(draw_er)
  end
