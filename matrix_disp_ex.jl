@@ -2,15 +2,14 @@ using Gtk, Gtk.ShortNames, Graphics, Images, Cairo, Colors
  #include("CA.jl")
 import Base.push!
 mutable struct BiStateButton
-   btn::Gtk.ToggleButton
+   btn::Gtk.Button
    init_text::String
    clicked_text::String
    clicked::Bool
-
 end
 
 BiStateButton(init_txt::String, clicked_txt::String) =
-   BiStateButton(Gtk.ToggleButton(init_txt), init_txt, clicked_txt, false)
+   BiStateButton(Gtk.Button(init_txt), init_txt, clicked_txt, false)
 
 Base.push!(box::GtkBoxLeaf, btn::BiStateButton) = Base.push!(box, btn.btn)
 
@@ -46,7 +45,7 @@ mutable struct CARenderer
    reset::Bool
 end
 
-function CARenderer(ca::CellularAutomaton, mult=8)
+function CARenderer(ca::CellularAutomaton, ca_choices=[], mult=8)
    resume = Condition()
    task = @task callbackInner(state)
    win = Gtk.Window("Cellular Automata")
@@ -64,12 +63,24 @@ function CARenderer(ca::CellularAutomaton, mult=8)
    
    step_btn = Gtk.Button("step")
    push!(boxV, step_btn)
+   gol_btn  = BiStateButton("GoL", "MazeRunner")
+   push!(boxV, gol_btn)
 
    exit_btn = Gtk.Button("exit")
    push!(boxV, exit_btn)
-   push!(boxH, cnvs)
+ # TODO: change to using ComboBox (tried, but it never triggered)
+ #   cb = GtkComboBoxText()
+ #  for choice in ca_choices
+ #     push!(cb, string(choice))
+ #  end
+ #  set_gtk_property!(cb, :active, 1)
+
    renderer = CARenderer(ca, win, cnvs, mult, resume, nothing, true, false)
    renderer.task = @task runit(renderer, state)
+
+
+ #  push!(boxV, cb)
+   push!(boxH, cnvs)
    function handle_start_stop_btn(widget)
       if(start_stop_btn.clicked)
          start_stop_btn.clicked = false
@@ -82,6 +93,32 @@ function CARenderer(ca::CellularAutomaton, mult=8)
          notify(resume)
          start_stop_btn.clicked = true
          set_gtk_property!(start_stop_btn.btn, :label, String, start_stop_btn.clicked_text)
+      end
+   end
+
+   function handle_gol_btn(widget)
+      @show gol_btn.clicked
+      if(gol_btn.clicked)
+         gol_btn.clicked = false
+         println("choose MazeRunner")
+         set_gtk_property!(gol_btn.btn, :label, String, gol_btn.init_text)
+         renderer.stopped = true
+         renderer.ca  = MazeRunnerCA()
+         draw_state(renderer)
+         println("...after drawstate MazeRunner...")
+         set_gtk_property!(start_stop_btn.btn, :label, String, start_stop_btn.init_text)
+         start_stop_btn.clicked = false
+         set_gtk_property!(win, :title, String, "Running MazeRunner")
+      else
+         set_gtk_property!(gol_btn.btn, :label, String, gol_btn.clicked_text)
+         renderer.stopped = true
+         gol_btn.clicked = true
+         renderer.ca  = GoL()
+         draw_state(renderer)
+         println("choose GoL")
+         set_gtk_property!(start_stop_btn.btn, :label, String, start_stop_btn.init_text)
+         set_gtk_property!(win, :title, String, "Running GoL")
+         start_stop_btn.clicked = false
       end
    end
 
@@ -99,9 +136,17 @@ function CARenderer(ca::CellularAutomaton, mult=8)
    function handle_step_btn(widget)
       println("STEP")
       renderer.stopped = true
-      step(ca)
+      step(renderer.ca)
       draw_state(renderer)
    end
+
+ #   function handle_combobox(widget)
+ #     idx = get_gtk_proprty(cb, "active", Int)
+ #     println("combobox selects: $idx")
+ #     renderer.ca  = (ca_choices[(idx+1)])()
+ #     renderer.stopped = true
+ #     draw_state(renderer)
+ #  end
 
    function handle_exit_btn(widget)
       println("EXIT")
@@ -109,9 +154,11 @@ function CARenderer(ca::CellularAutomaton, mult=8)
    end
 
    Gtk.signal_connect(handle_start_stop_btn, start_stop_btn.btn,  "clicked")
-   Gtk.signal_connect(handle_reset_btn, reset_btn, "clicked")
+   Gtk.signal_connect(handle_reset_btn, reset_btn,"clicked")
    Gtk.signal_connect(handle_step_btn,  step_btn, "clicked")
-   Gtk.signal_connect(handle_exit_btn,  exit_btn,  "clicked")
+   Gtk.signal_connect(handle_exit_btn,  exit_btn, "clicked")
+   Gtk.signal_connect(handle_gol_btn,   gol_btn.btn,  "clicked")
+ #  Gtk.signal_connect(handle_combobox,  cb,       "changed")
 
    Gtk.showall(win)
    schedule(renderer.task)

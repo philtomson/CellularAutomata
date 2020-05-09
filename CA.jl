@@ -1,3 +1,15 @@
+function module_types_matching(modname, typ::DataType)
+   list = String[]
+   for nm in names(modname)
+      @show nm
+      @show modname
+      if typeof(eval(nm)) != Module
+         supertype(eval(nm)) == typ && push!(list,string(nm))
+      end 
+   end
+   return list
+end
+
 module CAs
 abstract type CellularAutomaton end
 abstract type TwoDimensionalCA <: CellularAutomaton end
@@ -7,7 +19,7 @@ include("matrix_disp_ex.jl")
 include("maze.jl")
 
 
-export GoL, CA
+export GoL, MazeRunnerCA, CA
 #2D neighborhoods:
 #Von Neumann neighborhood:
 VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1)]
@@ -34,16 +46,28 @@ mutable struct GoL <: TwoDimensionalCA
    init_fn::Function
    state
    wrap::Bool
-   next_state::Function
+   #next_state::Function
 end
+
+GoL() = GoL(Moore_Neighborhood, init, init(), true)
 
 mutable struct CA <: TwoDimensionalCA
    neighborhood::Array{Tuple{Int64,Int64},1} 
    init_fn::Function
    state
    wrap::Bool
-   next_state::Function
+  #next_state::Function
 end
+
+mutable struct MazeRunnerCA <: TwoDimensionalCA
+   neighborhood::Array{Tuple{Int64,Int64},1} 
+   init_fn::Function
+   state
+   wrap::Bool
+ #next_state::Function
+end
+
+MazeRunnerCA() = MazeRunnerCA(VN_Neighborhood, init_with_maze, init_with_maze(), false)
 
  #TwoArityOneDimNeighborhood = [
 
@@ -52,11 +76,11 @@ mutable struct OneD_CA <: OneDimensionalCA
    init_fn::Function
    state
    wrap::Bool
-   next_state::Function
+ #next_state::Function
 end
 
 
-CA() = CA(nothing, true, false, Moore_Neighborhood, init(), true,next_state)
+CA() = CA(nothing, true, false, Moore_Neighborhood, init(), true)
    
 
 function CA(fn::Function)
@@ -69,8 +93,8 @@ function CA(fn::Function)
    return CA(nbrhood,
              fn,
              fn(),
-             wrap,
-             ns_fn)
+             wrap
+             )
 end
 
 function sum_neighbors(ca::TwoDimensionalCA, cur_pos)
@@ -98,7 +122,8 @@ end
 # 1. Wall cells (1's) remain walls 
 # 2. A Cell surrounded by 3 or 4 wall cells becomes a wall cell
 # ... otherwise maintain state
-function next_state_maze(ca::TwoDimensionalCA)
+
+function next_state(ca::MazeRunnerCA)
    ret_matrix = similar(ca.state)
    for j = 1:size(ca.state,2)
       for i = 1:size(ca.state,2)
@@ -118,10 +143,10 @@ function next_state_maze(ca::TwoDimensionalCA)
 end
 
 # Conway's Game of Life rules:
-#    Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-#   Any live cell with two or three live neighbours lives on to the next generation.
-#   Any live cell with more than three live neighbours dies, as if by overpopulation.
-#   Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+# 1.Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+# 2.Any live cell with two or three live neighbours lives on to the next generation.
+# 3.Any live cell with more than three live neighbours dies, as if by overpopulation.
+# 4.Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
 function next_state(ca::TwoDimensionalCA)
    ret_matrix = similar(ca.state)
@@ -147,19 +172,23 @@ function next_state(ca::TwoDimensionalCA)
 end
 
 function step(ca::CellularAutomaton)
-   ca.state = ca.next_state(ca)
+   ca.state = next_state(ca)
 end
 
 
 function run(ca::TwoDimensionalCA)
-   draw_er = CARenderer(ca)
+   draw_er = CARenderer(ca, [GoL, MazeRunnerCA] )
    runit(draw_er)
  end
 
 end #module
 if abspath(PROGRAM_FILE) == @__FILE__
    using .CAs
-   ca = CAs.CA(CAs.init_with_maze)
+   ca_types = module_types_matching(CAs, CAs.CellularAutomaton)
+   @show ca_types
+   
+   #ca = CAs.MazeRunnerCA(CAs.init_with_maze)
+   ca = CAs.MazeRunnerCA()
    CAs.run(ca)
 end
          
