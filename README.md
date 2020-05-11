@@ -28,5 +28,10 @@ See: https://www.drdobbs.com/database/cellular-automata-for-solving-mazes/184408
 
    That's it. The CA will step with these rules until only the open path remains - at that point it's finished.
 
+## Maze Runner Example:
+
+   The Starting Maze:
 ![Alt text](./start_maze.png "Starting Maze")
+
+   After the path is found:
 ![Alt text](./end_maze.png "Ending Maze")
