@@ -30,8 +30,10 @@ See: https://www.drdobbs.com/database/cellular-automata-for-solving-mazes/184408
 
 ## Maze Runner Example:
 
-   The Starting Maze:
+The Starting Maze:
+
 ![Alt text](./start_maze.png "Starting Maze")
 
-   After the path is found:
+After the path is found:
+
 ![Alt text](./end_maze.png "Ending Maze")
