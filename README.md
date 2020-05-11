@@ -27,3 +27,6 @@ See: https://www.drdobbs.com/database/cellular-automata-for-solving-mazes/184408
    2. Wall cells remain wall cells.
 
    That's it. The CA will step with these rules until only the open path remains - at that point it's finished.
+
+![Alt text](./start_maze.png "Starting Maze")
+![Alt text](./end_maze.png "Ending Maze")
