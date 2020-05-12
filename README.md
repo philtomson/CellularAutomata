@@ -2,7 +2,11 @@
 
 This is a code doodle where I'm playing with using Julia to create a Cellular Automata GUI with Gtk.jl. 
 
-To run:
+### Dependencies:
+
+> pkg> add Gtk Graphics Images Cairo Colors
+
+### To run:
 
 > $  julia -i CA.jl
 
@@ -37,3 +41,5 @@ The Starting Maze:
 After the path is found:
 
 ![Alt text](./end_maze.png "Ending Maze")
+
+
