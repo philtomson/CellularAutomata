@@ -23,9 +23,13 @@ export GoL, MazeRunnerCA, CA
 #2D neighborhoods:
 #Von Neumann neighborhood:
 VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1)]
-Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
+#Maze neighborhood has to include current cell
+Maze_Neighborhood    = [(0,0), (1,0), (-1,0), (0,1), (0,-1)]
+Moore_Neighborhoobod = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
  #TODO select with a comnmand line arg
  #neighborhood = Moore_Neighborhood
+
+
 
 get_int_bits(item) = sizeof(item)*8
 
@@ -46,6 +50,7 @@ mutable struct GoL <: TwoDimensionalCA
    init_fn::Function
    state
    wrap::Bool
+   rule::Array{Int,1}
    #next_state::Function
 end
 
@@ -56,6 +61,7 @@ mutable struct CA <: TwoDimensionalCA
    init_fn::Function
    state
    wrap::Bool
+   rule::Array{Int,1}
   #next_state::Function
 end
 
@@ -64,12 +70,52 @@ mutable struct MazeRunnerCA <: TwoDimensionalCA
    init_fn::Function
    state
    wrap::Bool
- #next_state::Function
+   rule::Array{Int,1}
+
+   function gen_rule(ca::MazeRunnerCA)
+      out_rule = []
+      num_entries = 2^length(ca.neighborhood)
+      for i in 1:num_entries
+         bits = digits(i-1, base=2, pad=length(ca.neighborhood))
+         if bits[1] == 1 #wall (special case - wall stays a wall)
+            push!(out_rule, bits[1])
+         else
+            if (sum(bits[2:end]) >= 3)
+               push!(out_rule, 1)
+            else
+               push!(out_rule, 0)
+            end
+         end
+      end
+      return out_rule
+   end
+   
+   function MazeRunnerCA()
+      ca = new(Maze_Neighborhood, init_with_maze, init_with_maze(), false)
+      ca.rule = gen_rule(ca)
+      return ca
+   end
 end
 
-MazeRunnerCA() = MazeRunnerCA(VN_Neighborhood, init_with_maze, init_with_maze(), false)
+# CA type-specific behavior now moves to the 'rule'. Here we generate the rule array for the MazeRunnerCA
 
- #TwoArityOneDimNeighborhood = [
+function gen_rule(ca::GoL)
+   out_rule = []
+   num_entries = 2^length(ca.neighborhood)
+   for i in 1:num_entries
+      bits = digits(i-1, base=2, pad=length(ca.neighborhood))
+      if bits[1] == 1 #wall (special case - wall stays a wall)
+         push!(out_rule, bits[1])
+      else
+         if (sum(bits[2:end]) >= 3)
+            push!(out_rule, 1)
+         else
+            push!(out_rule, 0)
+         end
+      end
+   end
+   return out_rule
+end
 
 mutable struct OneD_CA <: OneDimensionalCA
    neighborhood::Array{Tuple{Int64,Int64},1} 
@@ -116,6 +162,24 @@ function sum_neighbors(ca::TwoDimensionalCA, cur_pos)
    return sum
 end
 
+function getindex(ca::TwoDimensionalCA, cur_pos)
+   idx = 0
+   for (i,p) in enumerate(ca.neighborhood)
+      if ca.wrap
+         safe_pos = mod1.(cur_pos .+ p, size(ca.state))
+         #sum += state_matrix[safe_pos...]
+         idx += 2^(i-1) * ca.state[safe_pos...]
+      else
+         pos = cur_pos .+ p
+         if (0 < pos[1] < size(ca.state,1)+1) && (0 < pos[2] < size(ca.state,2)+1)
+            #sum += ca.state[pos...]
+            idx += 2^(i-1) * ca.state[pos...]
+         end
+      end
+   end
+   return idx
+end
+
 
 
 #Maze solver rules:
@@ -127,16 +191,8 @@ function next_state(ca::MazeRunnerCA)
    ret_matrix = similar(ca.state)
    for j = 1:size(ca.state,2)
       for i = 1:size(ca.state,2)
-         ns = sum_neighbors(ca, (i,j)) 
-         if(ca.state[i,j] > 0 ) #WALL
-            ret_matrix[i,j] = (ca.state[i,j])
-         else #FREE CELL
-            if(ns < 3)
-               ret_matrix[i,j] = 0
-            elseif(ns == 3 || ns == 4)
-               ret_matrix[i,j] = 1
-            end
-         end
+         idx = getindex(ca, (i,j)) 
+         ret_matrix[i,j] = ca.rule[idx+1]
       end
     end
     return ret_matrix
@@ -182,7 +238,7 @@ function run(ca::TwoDimensionalCA)
  end
 
 end #module
-if abspath(PROGRAM_FILE) == @__FILE__
+#if abspath(PROGRAM_FILE) == @__FILE__
    using .CAs
    ca_types = module_types_matching(CAs, CAs.CellularAutomaton)
    @show ca_types
@@ -190,5 +246,5 @@ if abspath(PROGRAM_FILE) == @__FILE__
    #ca = CAs.MazeRunnerCA(CAs.init_with_maze)
    ca = CAs.MazeRunnerCA()
    CAs.run(ca)
-end
+#end
          
