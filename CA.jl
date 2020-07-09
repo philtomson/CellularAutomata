@@ -25,9 +25,8 @@ export GoL, MazeRunnerCA, CA
 VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1)]
 #Maze neighborhood has to include current cell
 Maze_Neighborhood    = [(0,0), (1,0), (-1,0), (0,1), (0,-1)]
-Moore_Neighborhoobod = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
+Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
  #TODO select with a comnmand line arg
- #neighborhood = Moore_Neighborhood
 
 
 
@@ -45,16 +44,45 @@ function init_with_maze(sz=50)
 end
 
 #Game of Life
+# Conway's Game of Life rules:
+# 1.Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+# 2.Any live cell with two or three live neighbours lives on to the next generation.
+# 3.Any live cell with more than three live neighbours dies, as if by overpopulation.
+# 4.Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 mutable struct GoL <: TwoDimensionalCA
    neighborhood::Array{Tuple{Int64,Int64},1} 
    init_fn::Function
    state
    wrap::Bool
    rule::Array{Int,1}
-   #next_state::Function
+
+   function gen_rule(ca::GoL)
+      println("gen_rule(ca::GoL) called")
+      out_rule = []
+      num_entries = 2^length(ca.neighborhood)
+      for i in 1:num_entries
+         bits = digits(i-1, base=2, pad=length(ca.neighborhood))
+         numones = sum(bits)
+         if (numones < 2 || numones > 3)
+            push!(out_rule, 0)
+         else
+            push!(out_rule, 1)
+         end
+      end
+      return out_rule
+   end
+
+   function GoL()
+      println("GoL constructor called")
+      ca = new(Moore_Neighborhood, init, init(), true)
+      @show ca
+      ca.rule = gen_rule(ca)
+      @show ca.rule
+      return ca
+   end
+
 end
 
-GoL() = GoL(Moore_Neighborhood, init, init(), true)
 
 mutable struct CA <: TwoDimensionalCA
    neighborhood::Array{Tuple{Int64,Int64},1} 
@@ -65,6 +93,10 @@ mutable struct CA <: TwoDimensionalCA
   #next_state::Function
 end
 
+#Maze solver rules:
+# 1. Wall cells (1's) remain walls 
+# 2. A Cell surrounded by 3 or 4 wall cells becomes a wall cell
+# ... otherwise maintain state
 mutable struct MazeRunnerCA <: TwoDimensionalCA
    neighborhood::Array{Tuple{Int64,Int64},1} 
    init_fn::Function
@@ -73,6 +105,7 @@ mutable struct MazeRunnerCA <: TwoDimensionalCA
    rule::Array{Int,1}
 
    function gen_rule(ca::MazeRunnerCA)
+      println("gen_rule(ca::MazeRunnerCA) called")
       out_rule = []
       num_entries = 2^length(ca.neighborhood)
       for i in 1:num_entries
@@ -93,28 +126,9 @@ mutable struct MazeRunnerCA <: TwoDimensionalCA
    function MazeRunnerCA()
       ca = new(Maze_Neighborhood, init_with_maze, init_with_maze(), false)
       ca.rule = gen_rule(ca)
+      @show ca.rule
       return ca
    end
-end
-
-# CA type-specific behavior now moves to the 'rule'. Here we generate the rule array for the MazeRunnerCA
-
-function gen_rule(ca::GoL)
-   out_rule = []
-   num_entries = 2^length(ca.neighborhood)
-   for i in 1:num_entries
-      bits = digits(i-1, base=2, pad=length(ca.neighborhood))
-      if bits[1] == 1 #wall (special case - wall stays a wall)
-         push!(out_rule, bits[1])
-      else
-         if (sum(bits[2:end]) >= 3)
-            push!(out_rule, 1)
-         else
-            push!(out_rule, 0)
-         end
-      end
-   end
-   return out_rule
 end
 
 mutable struct OneD_CA <: OneDimensionalCA
@@ -182,46 +196,12 @@ end
 
 
 
-#Maze solver rules:
-# 1. Wall cells (1's) remain walls 
-# 2. A Cell surrounded by 3 or 4 wall cells becomes a wall cell
-# ... otherwise maintain state
-
-function next_state(ca::MazeRunnerCA)
+function next_state(ca::TwoDimensionalCA)
    ret_matrix = similar(ca.state)
    for j = 1:size(ca.state,2)
       for i = 1:size(ca.state,2)
          idx = getindex(ca, (i,j)) 
          ret_matrix[i,j] = ca.rule[idx+1]
-      end
-    end
-    return ret_matrix
-end
-
-# Conway's Game of Life rules:
-# 1.Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-# 2.Any live cell with two or three live neighbours lives on to the next generation.
-# 3.Any live cell with more than three live neighbours dies, as if by overpopulation.
-# 4.Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-
-function next_state(ca::TwoDimensionalCA)
-   ret_matrix = similar(ca.state)
-   for j = 1:size(ca.state,2)
-      for i = 1:size(ca.state,2)
-         ns = sum_neighbors(ca, (i,j)) 
-         if(ca.state[i,j] > 0 )
-            if( ns < 2 || ns > 3)
-               ret_matrix[i,j] = 0
-            else 
-               ret_matrix[i,j] = (ca.state[i,j])
-            end
-         else #currently dead
-            if(ns == 3)
-               ret_matrix[i,j] = 1
-            else
-               ret_matrix[i,j] = (ca.state[i,j])
-            end
-         end
       end
     end
     return ret_matrix
@@ -238,13 +218,12 @@ function run(ca::TwoDimensionalCA)
  end
 
 end #module
-#if abspath(PROGRAM_FILE) == @__FILE__
+if abspath(PROGRAM_FILE) == @__FILE__
    using .CAs
    ca_types = module_types_matching(CAs, CAs.CellularAutomaton)
    @show ca_types
    
-   #ca = CAs.MazeRunnerCA(CAs.init_with_maze)
    ca = CAs.MazeRunnerCA()
    CAs.run(ca)
-#end
+end
          
