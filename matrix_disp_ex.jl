@@ -180,6 +180,7 @@ function runit(this::CARenderer )
    while true
       draw_state(this)
       if(this.reset)
+         println("runit: this.reset is true")
          this.reset = false
          this.ca.state = this.ca.init_fn()
          draw_state(this)
@@ -191,7 +192,8 @@ function runit(this::CARenderer )
       end
       if(sum(this.ca.state) == 0)
          println("ALL CELLS DEAD!!!")
-         break
+         this.stopped = true
+
       end
       step(this.ca)
       sleep(0.01)

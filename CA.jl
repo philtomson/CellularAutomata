@@ -19,7 +19,7 @@ include("matrix_disp_ex.jl")
 include("maze.jl")
 
 
-export GoL, MazeRunnerCA, CA
+export GoL, MazeRunnerCA#, CA
 #2D neighborhoods:
 #Von Neumann neighborhood:
 VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1)]
@@ -33,12 +33,14 @@ Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
 get_int_bits(item) = sizeof(item)*8
 
 function init(sz=50)
+   println("GoL init")
    state = rand(UInt16, sz, sz)
    state = [ x > 0x8000 for x in state]
    return state
 end
 
 function init_with_maze(sz=50)
+   println("maze init")
    h=w=Int(floor(sz/2))
    return maze(h,w)
 end
@@ -69,7 +71,7 @@ mutable struct GoL <: TwoDimensionalCA
             push!(out_rule, 1)
          end
       end
-      return out_rule
+      return reverse(out_rule)
    end
 
    function GoL()
@@ -81,16 +83,6 @@ mutable struct GoL <: TwoDimensionalCA
       return ca
    end
 
-end
-
-
-mutable struct CA <: TwoDimensionalCA
-   neighborhood::Array{Tuple{Int64,Int64},1} 
-   init_fn::Function
-   state
-   wrap::Bool
-   rule::Array{Int,1}
-  #next_state::Function
 end
 
 #Maze solver rules:
@@ -137,24 +129,6 @@ mutable struct OneD_CA <: OneDimensionalCA
    state
    wrap::Bool
  #next_state::Function
-end
-
-
-CA() = CA(nothing, true, false, Moore_Neighborhood, init(), true)
-   
-
-function CA(fn::Function)
-   init_fn_name = Symbol(fn)
-   nbrhood, ns_fn, wrap = if init_fn_name == :init
-                (Moore_Neigborhood, next_state,true)
-             else
-                (VN_Neighborhood, next_state_maze,false)
-             end
-   return CA(nbrhood,
-             fn,
-             fn(),
-             wrap
-             )
 end
 
 function sum_neighbors(ca::TwoDimensionalCA, cur_pos)
