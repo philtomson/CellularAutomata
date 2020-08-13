@@ -22,7 +22,7 @@ include("maze.jl")
 export GoL, MazeRunnerCA#, CA
 #2D neighborhoods:
 #Von Neumann neighborhood:
-VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1)]
+VN_Neighborhood    = [(1,0), (-1,0),(0,0),(0,1), (0,-1)]
 #Maze neighborhood has to include current cell
 Maze_Neighborhood    = [(0,0), (1,0), (-1,0), (0,1), (0,-1)]
 Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
@@ -71,12 +71,12 @@ mutable struct GoL <: TwoDimensionalCA
             push!(out_rule, 1)
          end
       end
-      return reverse(out_rule)
+      return out_rule
    end
 
-   function GoL()
+   function GoL(initfn::Function)
       println("GoL constructor called")
-      ca = new(Moore_Neighborhood, init, init(), true)
+      ca = new(Moore_Neighborhood, initfn, initfn(), true)
       @show ca
       ca.rule = gen_rule(ca)
       @show ca.rule
@@ -84,6 +84,8 @@ mutable struct GoL <: TwoDimensionalCA
    end
 
 end
+
+GoL() = GoL(init)
 
 #Maze solver rules:
 # 1. Wall cells (1's) remain walls 
