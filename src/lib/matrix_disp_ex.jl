@@ -1,5 +1,4 @@
 using Gtk, Gtk.ShortNames, Graphics, Images, Cairo, Colors
- #include("CA.jl")
 import Base.push!
 mutable struct BiStateButton
    btn::Gtk.Button

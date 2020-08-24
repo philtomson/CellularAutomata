@@ -10,13 +10,9 @@ function module_types_matching(modname, typ::DataType)
    return list
 end
 
-module CAs
-abstract type CellularAutomaton end
-abstract type TwoDimensionalCA <: CellularAutomaton end
-abstract type OneDimensionalCA <: CellularAutomaton end
 
-include("matrix_disp_ex.jl")
-include("maze.jl")
+
+
 
 
 export GoL, MazeRunnerCA#, CA
@@ -193,13 +189,5 @@ function run(ca::TwoDimensionalCA)
    runit(draw_er)
  end
 
-end #module
-if abspath(PROGRAM_FILE) == @__FILE__
-   using .CAs
-   ca_types = module_types_matching(CAs, CAs.CellularAutomaton)
-   @show ca_types
-   
-   ca = CAs.MazeRunnerCA()
-   CAs.run(ca)
-end
+
          
