@@ -18,11 +18,11 @@ end
 export GoL, MazeRunnerCA#, CA
 #2D neighborhoods:
 #Von Neumann neighborhood:
-VN_Neighborhood    = [(1,0), (-1,0),(0,0),(0,1), (0,-1)]
+VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1), (0,0)]
 #Maze neighborhood has to include current cell
 Maze_Neighborhood    = [(0,0), (1,0), (-1,0), (0,1), (0,-1)]
-Moore_Neighborhood = vcat(VN_Neighborhood,[(-1,-1), (1,1), (-1,1), (1,-1)])
- #TODO select with a comnmand line arg
+Moore_Neighborhood = vcat([(-1,-1), (1,1), (-1,1), (1,-1)], VN_Neighborhood)
+ #TODO select with a command line arg
 
 
 
@@ -59,13 +59,14 @@ mutable struct GoL <: TwoDimensionalCA
       out_rule = []
       num_entries = 2^length(ca.neighborhood)
       for i in 1:num_entries
-         bits = digits(i-1, base=2, pad=length(ca.neighborhood))
-         numones = sum(bits)
-         if (numones < 2 || numones > 3)
-            push!(out_rule, 0)
-         else
-            push!(out_rule, 1)
-         end
+         bits = digits( (i-1), base=2, pad=length(ca.neighborhood))
+         live = bits[1]==1 #LSB represents center cell
+
+         numones = sum(bits[2:end])
+         push!(out_rule, Int( ( live && ( 2 <= numones <= 3)) ||
+                              ( !live && (numones == 3))
+                            )
+              )
       end
       return out_rule
    end
@@ -153,12 +154,10 @@ function getindex(ca::TwoDimensionalCA, cur_pos)
    for (i,p) in enumerate(ca.neighborhood)
       if ca.wrap
          safe_pos = mod1.(cur_pos .+ p, size(ca.state))
-         #sum += state_matrix[safe_pos...]
          idx += 2^(i-1) * ca.state[safe_pos...]
       else
          pos = cur_pos .+ p
          if (0 < pos[1] < size(ca.state,1)+1) && (0 < pos[2] < size(ca.state,2)+1)
-            #sum += ca.state[pos...]
             idx += 2^(i-1) * ca.state[pos...]
          end
       end
