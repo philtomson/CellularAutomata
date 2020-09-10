@@ -68,12 +68,15 @@ mutable struct GoL <: TwoDimensionalCA
                             )
               )
       end
+      #Now get rid of the (0,0) (current element) from neighborhood
+      #as it will only cause problems later
+      filter!(e -> e != (0,0),ca.neighborhood)
       return out_rule
    end
 
-   function GoL(initfn::Function)
+   function GoL(initfn::Function, size=50)
       println("GoL constructor called")
-      ca = new(Moore_Neighborhood, initfn, initfn(), true)
+      ca = new(Moore_Neighborhood, initfn, initfn(size), true)
       @show ca
       ca.rule = gen_rule(ca)
       @show ca.rule
@@ -83,6 +86,7 @@ mutable struct GoL <: TwoDimensionalCA
 end
 
 GoL() = GoL(init)
+GoL(size::Integer) = GoL(init, size)
 
 #Maze solver rules:
 # 1. Wall cells (1's) remain walls 
@@ -166,6 +170,25 @@ function getindex(ca::TwoDimensionalCA, cur_pos)
 end
 
 
+function get_indexes(ca::TwoDimensionalCA)
+   ret_idxs = zeros(size(ca.state))
+   for i = 1:size(ca.state, 1)
+      for j = 1:size(ca.state,2)
+         ret_idxs[i,j] = getindex(ca, (i,j))
+      end
+   end
+   return ret_idxs
+end
+
+function get_sums(ca::TwoDimensionalCA)
+   ret_sums = zeros(size(ca.state))
+   for i = 1:size(ca.state, 1)
+      for j = 1:size(ca.state,2)
+         ret_sums[i,j] = sum_neighbors(ca, (i,j))
+      end
+   end
+   return ret_sums
+end
 
 function next_state(ca::TwoDimensionalCA)
    ret_matrix = similar(ca.state)
