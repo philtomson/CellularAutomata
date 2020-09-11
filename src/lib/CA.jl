@@ -67,10 +67,18 @@ mutable struct GoL <: TwoDimensionalCA
                               ( !live && (numones == 3))
                             )
               )
+         if (i-1) == 161
+            @show i
+            @show bits
+            @show out_rule[end]
+            @show out_rule[end] == out_rule[i]
+            @show numones
+            @show size(out_rule)
+         end
       end
-      #Now get rid of the (0,0) (current element) from neighborhood
-      #as it will only cause problems later
-      filter!(e -> e != (0,0),ca.neighborhood)
+      ##Now get rid of the (0,0) (current element) from neighborhood
+      ##as it will only cause problems later
+      #filter!(e -> e != (0,0),ca.neighborhood)
       return out_rule
    end
 
@@ -153,7 +161,7 @@ function sum_neighbors(ca::TwoDimensionalCA, cur_pos)
    return sum
 end
 
-function getindex(ca::TwoDimensionalCA, cur_pos)
+function getindex(ca::MazeRunnerCA, cur_pos)
    idx = 0
    for (i,p) in enumerate(ca.neighborhood)
       if ca.wrap
@@ -163,6 +171,30 @@ function getindex(ca::TwoDimensionalCA, cur_pos)
          pos = cur_pos .+ p
          if (0 < pos[1] < size(ca.state,1)+1) && (0 < pos[2] < size(ca.state,2)+1)
             idx += 2^(i-1) * ca.state[pos...]
+         end
+      end
+   end
+   return idx
+end
+
+function getindex(ca::GoL, cur_pos)
+   idx = 0
+   for (i,p) in enumerate(ca.neighborhood)
+      if ca.wrap
+         safe_pos = mod1.(cur_pos .+ p, size(ca.state))
+         if p == (0,0)
+            idx += ca.state[safe_pos...]
+         else
+            idx += 2^(i-1) * ca.state[safe_pos...]
+         end
+      else
+         pos = cur_pos .+ p
+         if (0 < pos[1] < size(ca.state,1)+1) && (0 < pos[2] < size(ca.state,2)+1)
+            if p == (0,0)
+               idx += ca.state[pos...]
+            else
+               idx += 2^(i-1) * ca.state[pos...]
+            end
          end
       end
    end
