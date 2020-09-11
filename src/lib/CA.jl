@@ -10,11 +10,6 @@ function module_types_matching(modname, typ::DataType)
    return list
 end
 
-
-
-
-
-
 export GoL, MazeRunnerCA#, CA
 #2D neighborhoods:
 #Von Neumann neighborhood:
@@ -22,9 +17,6 @@ VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1), (0,0)]
 #Maze neighborhood has to include current cell
 Maze_Neighborhood    = [(0,0), (1,0), (-1,0), (0,1), (0,-1)]
 Moore_Neighborhood = vcat([(-1,-1), (1,1), (-1,1), (1,-1)], VN_Neighborhood)
- #TODO select with a command line arg
-
-
 
 get_int_bits(item) = sizeof(item)*8
 
@@ -67,14 +59,6 @@ mutable struct GoL <: TwoDimensionalCA
                               ( !live && (numones == 3))
                             )
               )
-         if (i-1) == 161
-            @show i
-            @show bits
-            @show out_rule[end]
-            @show out_rule[end] == out_rule[i]
-            @show numones
-            @show size(out_rule)
-         end
       end
       ##Now get rid of the (0,0) (current element) from neighborhood
       ##as it will only cause problems later
@@ -139,7 +123,6 @@ mutable struct OneD_CA <: OneDimensionalCA
    init_fn::Function
    state
    wrap::Bool
- #next_state::Function
 end
 
 function sum_neighbors(ca::TwoDimensionalCA, cur_pos)
