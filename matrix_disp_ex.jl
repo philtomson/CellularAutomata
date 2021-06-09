@@ -1,5 +1,6 @@
 using Gtk, Gtk.ShortNames, Graphics, Images, Cairo, Colors
 import Base.push!
+include("src/CellularAutomata.jl")
 mutable struct BiStateButton
    btn::Gtk.Button
    init_text::String
@@ -34,7 +35,7 @@ end
  #end
 
 mutable struct CARenderer
-   ca::CellularAutomaton
+   ca::CellularAutomata.CellularAutomaton
    win::GtkWindowLeaf
    canvas::GtkCanvas
    mult::Int #zoom factor
@@ -44,7 +45,7 @@ mutable struct CARenderer
    reset::Bool
 end
 
-function CARenderer(ca::CellularAutomaton, ca_choices=[], mult=8)
+function CARenderer(ca::CellularAutomata.CellularAutomaton, ca_choices=[], mult=8)
    resume = Condition()
    task = @task callbackInner(state)
    win = Gtk.Window("Cellular Automata")
@@ -174,6 +175,11 @@ function draw_state(this::CARenderer)
    end
 end
 
+function run(ca::CellularAutomata.TwoDimensionalCA)
+   draw_er = CARenderer(ca, [CellularAutomata.GoL, CellularAutomata.MazeRunnerCA] )
+   runit(draw_er)
+ end
+
 function runit(this::CARenderer )
    draw_state(this)
    while true
@@ -194,7 +200,7 @@ function runit(this::CARenderer )
          this.stopped = true
 
       end
-      step(this.ca)
+      CellularAutomata.step(this.ca)
       sleep(0.01)
    end
 end

@@ -1,3 +1,7 @@
+#abstract type CellularAutomaton end
+ #abstract type TwoDimensionalCA <: CellularAutomaton end
+ #abstract type OneDimensionalCA <: CellularAutomaton end
+
 function module_types_matching(modname, typ::DataType)
    list = String[]
    for nm in names(modname)
@@ -221,10 +225,10 @@ function step(ca::CellularAutomaton)
 end
 
 
-function run(ca::TwoDimensionalCA)
-   draw_er = CARenderer(ca, [GoL, MazeRunnerCA] )
-   runit(draw_er)
- end
+ #function run(ca::TwoDimensionalCA)
+ #  draw_er = CARenderer(ca, [GoL, MazeRunnerCA] )
+ #  runit(draw_er)
+ #end
 
 
          

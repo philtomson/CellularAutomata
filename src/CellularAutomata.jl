@@ -5,10 +5,10 @@ abstract type TwoDimensionalCA <: CellularAutomaton end
 abstract type OneDimensionalCA <: CellularAutomaton end
 
 include("lib/CA.jl")
-include("lib/matrix_disp_ex.jl")
+#include("lib/matrix_disp_ex.jl")
 include("lib/maze.jl")
 
-export run, MazeRunner, GoL, runit
+export CellularAutomaton, TwoDimensionalCA, MazeRunner, GoL, runit, step
 # Write your package code here.
 #ca_types = module_types_matching(CAs, CellularAutomaton)
 #@show ca_types

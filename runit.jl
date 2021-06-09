@@ -1,4 +1,6 @@
 include("./src/CellularAutomata.jl")
+include("./matrix_disp_ex.jl")
+
 ca = CellularAutomata.MazeRunnerCA()
-CellularAutomata.run(ca)
+run(ca)
 
