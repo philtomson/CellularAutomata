@@ -8,7 +8,7 @@ This is a code doodle where I'm playing with using Julia to create a Cellular Au
 
 ### To run:
 
-> $  julia -i runit.jl
+> $  julia --project=. -i runit.jl
 
 There are two CAs defined here: 
 
