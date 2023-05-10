@@ -130,7 +130,7 @@ function CARenderer(ca::CellularAutomata.CellularAutomaton, ca_choices=[], mult=
    function handle_step_btn(widget)
       println("STEP")
       renderer.stopped = true
-      step(renderer.ca)
+      CellularAutomata.step(renderer.ca)
       draw_state(renderer)
    end
 
