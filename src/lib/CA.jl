@@ -18,7 +18,7 @@ export GoL, MazeRunnerCA#, CA
 #2D neighborhoods:
 #Von Neumann neighborhood:
 VN_Neighborhood    = [(1,0), (-1,0), (0,1), (0,-1), (0,0)]
-#Maze neighborhood has to include current cell
+#Maze neighborhood is actually same as the VN neighborhood just different order
 Maze_Neighborhood    = [(0,0), (1,0), (-1,0), (0,1), (0,-1)]
 Moore_Neighborhood = vcat([(-1,-1), (1,1), (-1,1), (1,-1)], VN_Neighborhood)
 
@@ -92,7 +92,6 @@ mutable struct MazeRunnerCA <: TwoDimensionalCA
    neighborhood::Array{Tuple{Int64,Int64},1} 
    init_fn::Function
    state
-   wrap::Bool
    rule::Array{Int,1}
 
    function gen_rule(ca::MazeRunnerCA)
@@ -114,8 +113,8 @@ mutable struct MazeRunnerCA <: TwoDimensionalCA
       return out_rule
    end
    
-   function MazeRunnerCA()
-      ca = new(Maze_Neighborhood, init_with_maze, init_with_maze(), false)
+   function MazeRunnerCA(sz=50)
+      ca = new(Maze_Neighborhood, init_with_maze, init_with_maze(sz))
       ca.rule = gen_rule(ca)
       @show ca.rule
       return ca
@@ -129,6 +128,7 @@ mutable struct OneD_CA <: OneDimensionalCA
    wrap::Bool
 end
 
+#sum_neighbors was used prior to the LUT approach
 function sum_neighbors(ca::TwoDimensionalCA, cur_pos)
    state_matrix = ca.state
    nhood = ca.neighborhood
@@ -148,17 +148,14 @@ function sum_neighbors(ca::TwoDimensionalCA, cur_pos)
    return sum
 end
 
+# getindex returns the rules index based on surroundings at current position
+
 function getindex(ca::MazeRunnerCA, cur_pos)
    idx = 0
    for (i,p) in enumerate(ca.neighborhood)
-      if ca.wrap
-         safe_pos = mod1.(cur_pos .+ p, size(ca.state))
-         idx += 2^(i-1) * ca.state[safe_pos...]
-      else
-         pos = cur_pos .+ p
-         if (0 < pos[1] < size(ca.state,1)+1) && (0 < pos[2] < size(ca.state,2)+1)
-            idx += 2^(i-1) * ca.state[pos...]
-         end
+      pos = cur_pos .+ p
+      if (0 < pos[1] < size(ca.state,1)+1) && (0 < pos[2] < size(ca.state,2)+1)
+         idx += 2^(i-1) * ca.state[pos...]
       end
    end
    return idx
@@ -212,7 +209,7 @@ end
 function next_state(ca::TwoDimensionalCA)
    ret_matrix = similar(ca.state)
    for j = 1:size(ca.state,2)
-      for i = 1:size(ca.state,2)
+      for i = 1:size(ca.state,1)
          idx = getindex(ca, (i,j)) 
          ret_matrix[i,j] = ca.rule[idx+1]
       end
@@ -223,12 +220,5 @@ end
 function step(ca::CellularAutomaton)
    ca.state = next_state(ca)
 end
-
-
- #function run(ca::TwoDimensionalCA)
- #  draw_er = CARenderer(ca, [GoL, MazeRunnerCA] )
- #  runit(draw_er)
- #end
-
 
          

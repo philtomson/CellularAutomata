@@ -28,12 +28,6 @@ function expand_matrix(m, x)
    return ret_buf
 end
 
- #mutable struct CallBackState
- #  task::Union{Task, Nothing}
- #  stopped::Bool
- #  reset::Bool
- #end
-
 mutable struct CARenderer
    ca::CellularAutomata.CellularAutomaton
    win::GtkWindowLeaf
@@ -140,6 +134,7 @@ function CARenderer(ca::CellularAutomata.CellularAutomaton, ca_choices=[], mult=
       draw_state(renderer)
    end
 
+ #TODO: for combobox 
  #   function handle_combobox(widget)
  #     idx = get_gtk_proprty(cb, "active", Int)
  #     println("combobox selects: $idx")
