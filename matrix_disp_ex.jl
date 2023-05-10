@@ -97,7 +97,7 @@ function CARenderer(ca::CellularAutomata.CellularAutomaton, ca_choices=[], mult=
          println("choose MazeRunner")
          set_gtk_property!(gol_btn.btn, :label, String, gol_btn.init_text)
          renderer.stopped = true
-         renderer.ca  = MazeRunnerCA()
+         renderer.ca  = CellularAutomata.MazeRunnerCA()
          draw_state(renderer)
          println("...after drawstate MazeRunner...")
          set_gtk_property!(start_stop_btn.btn, :label, String, start_stop_btn.init_text)
@@ -107,7 +107,7 @@ function CARenderer(ca::CellularAutomata.CellularAutomaton, ca_choices=[], mult=
          set_gtk_property!(gol_btn.btn, :label, String, gol_btn.clicked_text)
          renderer.stopped = true
          gol_btn.clicked = true
-         renderer.ca  = GoL()
+         renderer.ca  = CellularAutomata.GoL()
          draw_state(renderer)
          println("choose GoL")
          set_gtk_property!(start_stop_btn.btn, :label, String, start_stop_btn.init_text)
